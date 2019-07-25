@@ -78,5 +78,6 @@
       post-quote
       parse-quote
       check-rate
+      calc-savings
       formatted-msg
       send-msg))
