@@ -1,6 +1,5 @@
 (ns transferwise-clj.core
   (:require [clj-http.client :as client]
-            [cheshire.core :refer :all]
             [environ.core :refer [env]]))
 ;ENV
 (def chat-id (env :master-chat))
@@ -38,22 +37,32 @@
 
 (defn parse-quote
   "Parses the quote object retrived from Transferwise"
-  [{:keys [body] :as res}]
-  (let [{rate :rate
-         options :paymentOptions} body]
+  [{:keys [body]}]
+  (let [{rate :rate options :paymentOptions} body]
     {:actual-rate rate :amount (-> options second :targetAmount)}))
+
+(defn is-greater
+  "Check if the first rate is greater than the other"
+  [l-rate r-rate]
+  (> l-rate r-rate))
 
 (defn check-rate
   "Check if actual quote is greater than last one"
   [parsed-quote]
-  (if (> (parsed-quote :actual-rate) (last-transaction :rate)) parsed-quote))
+  (let [{actual-rate :actual-rate} parsed-quote
+        {last-rate :rate} last-transaction]
+    (if (is-greater actual-rate last-rate) parsed-quote)))
 
 (defn calc-savings
   "Calc the amount of money you should saving performing the transaction today"
   [parsed-quote]
-  {:savings (- (parsed-quote :amount) (last-transaction :targetAmount))
-   :actual-rate (parsed-quote :actual-rate)
-   :last-rate (last-transaction :rate)})
+  (let [{actual-amount :amount
+         actual-rate :actual-rate} parsed-quote
+        {last-amount :targetAmount
+         last-rate :rate} last-transaction]
+    {:savings (- actual-amount last-amount)
+     :actual-rate actual-rate
+     :last-rate last-rate}))
 
 (defn formatted-msg
   "This should return a formatted message for telegram"
@@ -69,8 +78,7 @@
 (defn send-msg
   "Send message to telegram chanel"
   [message]
-  (client/post message-url {:form-params {:chat_id chat-id
-                                          :text message}}))
+  (client/post message-url {:form-params {:chat_id chat-id :text message}}))
 
 (defn -main
   [& args]
