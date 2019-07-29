@@ -1,5 +1,5 @@
 (ns transferwise-clj.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is are]]
             [transferwise-clj.core :refer :all]))
 
 (deftest a-test
