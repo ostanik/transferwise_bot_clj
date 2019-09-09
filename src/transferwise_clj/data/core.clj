@@ -1,4 +1,4 @@
 (ns transferwise-clj.data.core)
 
-(defn new-rate-map [rate amount] {:rate   rate
-                                  :amount amount})
+(defrecord Rate [rate amount])
+(defrecord Telegram [savings actual-rate last-rate])
